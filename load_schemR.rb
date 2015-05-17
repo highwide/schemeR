@@ -3,8 +3,10 @@ require './schemeR.rb'
 include SchemeR
 
 exp = \
-[:let, [[:x, 3]],
-  [:let, [[:fun, [:lambda, [:y], [:+, :x, :y]]]],
-    [:+, [:fun, 1], [:fun, 2]]]]
+  [:letrec,
+    [[:fact,
+      [:lambda, [:n], [:if, [:<, :n, 1], 1, [:*, :n, [:fact, [:-, :n, 1]]]]]]],
+    [:fact, 3]]
 
+binding.pry
 puts _eval(exp, $global_env)

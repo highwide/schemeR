@@ -1,6 +1,5 @@
 module SchemeR
   def _eval(exp, env)
-    binding.pry
     if not list?(exp)
       if immediate_val?(exp)
         exp
@@ -41,7 +40,7 @@ module SchemeR
   def special_form?(exp)
     lambda?(exp) or
       let?(exp) or
-      #letrc?(exp) or
+      letrec?(exp) or
       if?(exp)
   end
 
@@ -69,7 +68,7 @@ module SchemeR
     parameters, args, body = letrec_to_parameters_args_body(exp)
     tmp_env = Hash.new
     parameters.each do |parameter|
-      tmp_env[parameter] = dummy
+      tmp_env[parameter] = :dummy
     end
     ext_env = extend_env(tmp_env.keys(), tmp_env.values(), env)
     args_val = eval_list(args, ext_env)
@@ -80,7 +79,7 @@ module SchemeR
 
   def set_extend_env!(parameters, args_val, ext_env)
     parameters.zip(args_val).each do |parameter, arg_val|
-      ext_env[0][parameters] = arg_var
+      ext_env[0][parameter] = arg_val
     end
   end
 
@@ -185,10 +184,9 @@ module SchemeR
     :== => [:prim, lambda{|x, y| x == y}],
   }
 
-  $boolean_env =
-      {true: true, false: false}
+  $boolean_env = {true: true, false: false}
 
-  $global_env = [$primitive_fun_env]
+  $global_env = [$primitive_fun_env, $boolean_env]
 
 
   def lookup_primitive_fun(exp)
