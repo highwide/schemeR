@@ -1,5 +1,6 @@
 module SchemeR
   def _eval(exp, env)
+    binding.pry
     if not list?(exp)
       if immediate_val?(exp)
         exp
@@ -39,7 +40,9 @@ module SchemeR
 
   def special_form?(exp)
     lambda?(exp) or
-      let?(exp)
+      let?(exp) or
+      #letrc?(exp) or
+      if?(exp)
   end
 
   def lambda?(exp)
@@ -55,16 +58,42 @@ module SchemeR
       eval_lambda(exp, env)
     elsif let?(exp)
       eval_let(exp, env)
+    elsif letrec?(exp)
+      eval_letrec(exp, env)
+    elsif if?(exp)
+      eval_if(exp, env)
     end
+  end
+
+  def eval_letrec(exp, env)
+    parameters, args, body = letrec_to_parameters_args_body(exp)
+    tmp_env = Hash.new
+    parameters.each do |parameter|
+      tmp_env[parameter] = dummy
+    end
+    ext_env = extend_env(tmp_env.keys(), tmp_env.values(), env)
+    args_val = eval_list(args, ext_env)
+    set_extend_env!(parameters, args_val, ext_env)
+    new_exp = [[:lambda, parameters, body]] + args
+    _eval(new_exp, ext_env)
+  end
+
+  def set_extend_env!(parameters, args_val, ext_env)
+    parameters.zip(args_val).each do |parameter, arg_val|
+      ext_env[0][parameters] = arg_var
+    end
+  end
+
+  def letrec_to_parameters_args_body(exp)
+    let_to_parameters_args_body(exp)
+  end
+
+  def letrec?(exp)
+    exp[0] == :letrec
   end
 
   def eval_lambda(exp, env)
     make_closure(exp, env)
-  end
-
-  def make_closure(exp, env)
-    parameters, body = exp[1], exp[2]
-    [:closure, parameters, body, env]
   end
 
   def eval_let(exp, env)
@@ -72,13 +101,35 @@ module SchemeR
     new_exp = [[:lambda, parameters, body]] + args
     _eval(new_exp, env)
   end
+  
+  def eval_list(exp, env)
+    exp.map{|e| _eval(e, env)}
+  end
+
+  def eval_if(exp, env)
+    cond, true_clause, false_clause = if_to_cond_true_false(exp)
+    if _eval(cond, env)
+      _eval(true_clause, env)
+    else
+      _eval(false_clause, env)
+    end
+  end
+
+  def if_to_cond_true_false(exp)
+    [exp[1], exp[2], exp[3]]
+  end
+
+  def if?(exp)
+    exp[0] == :if
+  end
+  
+  def make_closure(exp, env)
+    parameters, body = exp[1], exp[2]
+    [:closure, parameters, body, env]
+  end
 
   def let_to_parameters_args_body(exp)
     [exp[1].map{ |e| e[0] }, exp[1].map{ |e| e[1]}, exp[2]]
-  end
-
-  def eval_list(exp, env)
-    exp.map{|e| _eval(e, env)}
   end
 
   def car(list)
@@ -124,12 +175,21 @@ module SchemeR
   end
 
   $primitive_fun_env = {
-    :+ => [:prim, lambda{|x, y| x + y}],
-    :- => [:prim, lambda{|x, y| x - y}],
-    :* => [:prim, lambda{|x, y| x * y}]
+    :+  => [:prim, lambda{|x, y| x + y}],
+    :-  => [:prim, lambda{|x, y| x - y}],
+    :*  => [:prim, lambda{|x, y| x * y}],
+    :>  => [:prim, lambda{|x, y| x > y}],
+    :>= => [:prim, lambda{|x, y| x >= y}],
+    :<  => [:prim, lambda{|x, y| x < y}],
+    :<= => [:prim, lambda{|x, y| x <= y}],
+    :== => [:prim, lambda{|x, y| x == y}],
   }
 
+  $boolean_env =
+      {true: true, false: false}
+
   $global_env = [$primitive_fun_env]
+
 
   def lookup_primitive_fun(exp)
     $primitive_fun_env[exp]
