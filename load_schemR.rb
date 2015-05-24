@@ -2,11 +2,14 @@ require 'pry-byebug'
 require './schemeR.rb'
 include SchemeR
 
-exp = \
-  [:letrec,
-    [[:fact,
-      [:lambda, [:n], [:if, [:<, :n, 1], 1, [:*, :n, [:fact, [:-, :n, 1]]]]]]],
-    [:fact, 3]]
+definition = \
+[:define, [:length, :list], [:if, [:null?, :list],
+    0,
+    [:+, [:length, [:cdr, :list]], 1]]]
 
 binding.pry
+_eval(definition, $global_env)
+
+exp = [:length, [:list, 1, 2]]
+
 puts _eval(exp, $global_env)
