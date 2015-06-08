@@ -2,14 +2,12 @@ require 'pry-byebug'
 require './schemeR.rb'
 include SchemeR
 
-definition = \
-[:define, [:length, :list], [:if, [:null?, :list],
-    0,
-    [:+, [:length, [:cdr, :list]], 1]]]
-
 binding.pry
+definition = \
+parse('(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))')
+
 _eval(definition, $global_env)
 
-exp = [:length, [:list, 1, 2]]
+exp = parse('(fib 10)')
 
 puts _eval(exp, $global_env)

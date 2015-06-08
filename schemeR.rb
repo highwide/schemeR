@@ -270,10 +270,10 @@ module SchemeR
 
   def parse(exp)
     program = exp.strip().
-      gsub(/[a-zA-Z\=\-\*><=][0-9a-zA-Z\+\-=!]*/, ':\\0').
+      gsub(/[a-zA-Z\+\-\*><=][0-9a-zA-Z\+\-=!]*/, ':\\0').
       gsub(/\s+/, ', ').
       gsub(/\(/, '[').
-      gsub(/\(/, ']').
+      gsub(/\)/, ']')
     eval(program)
   end
   
